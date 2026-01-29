@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlobalWork Pro | Enterprise OS</title>
+    <meta name="description"
+        content="Enterprise-grade workforce management system with AI-powered attendance tracking, leave management, and productivity analytics">
+
+    <!-- Leaflet CSS for Map Picker -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="brand-logo">🌐</div>
+            <div class="brand-text">
+                <h1 class="brand-title">GlobalWork Pro</h1>
+                <p class="brand-subtitle" data-i18n="enterprise_os">Enterprise OS</p>
+            </div>
+        </div>
+
+        <nav class="nav">
+            <a href="#" class="nav-item active" data-section="dashboard" data-i18n="nav_dashboard">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-section="attendance" data-i18n="nav_attendance">
+                <span class="nav-icon">⏰</span>
+                <span class="nav-label">Attendance</span>
+            </a>
+            <a href="#" class="nav-item" data-section="leave" data-i18n="nav_leave">
+                <span class="nav-icon">🏖️</span>
+                <span class="nav-label">Leave Management</span>
+            </a>
+            <a href="#" class="nav-item" data-section="team" data-i18n="nav_team">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Team Status</span>
+            </a>
+            <a href="#" class="nav-item" data-section="ai-insights" data-i18n="nav_ai_insights">
+                <span class="nav-icon">🤖</span>
+                <span class="nav-label">AI Insights</span>
+            </a>
+            <a href="#" class="nav-item admin-only" data-section="admin" data-i18n="nav_admin">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Admin Console</span>
+            </a>
+            <a href="#" class="nav-item" data-section="settings" data-i18n="nav_settings">
+                <span class="nav-icon">🔧</span>
+                <span class="nav-label">Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="logoutBtn" data-i18n="btn_logout">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="breadcrumbs">
+                <span class="breadcrumb-current" id="currentSection" data-i18n="nav_dashboard">Dashboard</span>
+            </div>
+            <div class="top-bar-actions">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button class="lang-toggle" id="langToggle" aria-label="Toggle Language">
+                    <span class="lang-text">EN</span>
+                </button>
+                <div class="user-badge" id="currentUserBadge">
+                    <span class="user-avatar">👤</span>
+                    <span class="user-name" id="currentUserName">Guest</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section class="content-section active" id="section-dashboard">
+            <div class="section-header">
+                <h2 data-i18n="dashboard_title">Dashboard</h2>
+                <p data-i18n="dashboard_subtitle">Your work overview at a glance</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-card clock-in" id="clockInBtn">
+                    <div class="action-icon">🟢</div>
+                    <div class="action-content">
+                        <h3 data-i18n="action_clock_in">Clock In</h3>
+                        <p data-i18n="action_clock_in_desc">Start your work session</p>
+                    </div>
+                </button>
+                <button class="action-card clock-out" id="clockOutBtn" disabled>
+                    <div class="action-icon">🔴</div>
+                    <div class="action-content">
+                        <h3 data-i18n="action_clock_out">Clock Out</h3>
+                        <p data-i18n="action_clock_out_desc">End your work session</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Current Session Info -->
+            <div class="session-info glass-card" id="sessionInfo" style="display: none;">
+                <div class="session-header">
+                    <h3 data-i18n="current_session">Current Session</h3>
+                    <span class="session-status active" data-i18n="status_active">Active</span>
+                </div>
+                <div class="session-details">
+                    <div class="detail-item">
+                        <span class="detail-label" data-i18n="clock_in_time">Clock In:</span>
+                        <span class="detail-value" id="sessionStartTime">--:--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label" data-i18n="work_mode">Mode:</span>
+                        <span class="detail-value" id="sessionMode">Office</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label" data-i18n="location">Location:</span>
+                        <span class="detail-value" id="sessionLocation">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label" data-i18n="duration">Duration:</span>
+                        <span class="detail-value timer" id="sessionTimer">00:00:00</span>
+                    </div>
+                </div>
+
+                <!-- Break Controls -->
+                <div class="break-controls">
+                    <button class="btn-break" id="restroomBreakBtn" data-break-type="restroom">
+                        <span>🚻</span>
+                        <span data-i18n="break_restroom">Restroom</span>
+                    </button>
+                    <button class="btn-break" id="coffeeBreakBtn" data-break-type="coffee">
+                        <span>☕</span>
+                        <span data-i18n="break_coffee">Coffee Break</span>
+                    </button>
+                </div>
+                <div class="break-status" id="breakStatus" style="display: none;">
+                    <span data-i18n="on_break">On Break:</span>
+                    <span id="breakType">--</span>
+                    <span class="timer" id="breakTimer">00:00</span>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card glass-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <h4 data-i18n="stat_this_week">This Week</h4>
+                        <p class="stat-value" id="statWeekHours">0h</p>
+                        <span class="stat-label" data-i18n="stat_hours_worked">Hours Worked</span>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-content">
+                        <h4 data-i18n="stat_productivity">Productivity</h4>
+                        <p class="stat-value" id="statProductivity">--</p>
+                        <span class="stat-label" data-i18n="stat_weekly_score">Weekly Score</span>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon">🏖️</div>
+                    <div class="stat-content">
+                        <h4 data-i18n="stat_leave_balance">Leave Balance</h4>
+                        <p class="stat-value" id="statLeaveBalance">--</p>
+                        <span class="stat-label" data-i18n="stat_days_remaining">Days Remaining</span>
+                    </div>
+                </div>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon">⚖️</div>
+                    <div class="stat-content">
+                        <h4 data-i18n="stat_work_life">Work-Life Balance</h4>
+                        <p class="stat-value" id="statWorkLife">--</p>
+                        <span class="stat-label" data-i18n="stat_balance_score">Balance Score</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Chart -->
+            <div class="chart-container glass-card">
+                <h3 data-i18n="chart_weekly_hours">Weekly Work Hours</h3>
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Attendance Section -->
+        <section class="content-section" id="section-attendance">
+            <div class="section-header">
+                <h2 data-i18n="attendance_title">Attendance History</h2>
+                <p data-i18n="attendance_subtitle">View your complete attendance records</p>
+            </div>
+
+            <div class="table-actions">
+                <button class="btn-primary" id="exportAttendanceBtn" data-i18n="btn_export_csv">Export to CSV</button>
+            </div>
+
+            <div class="table-container glass-card">
+                <table class="data-table" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th data-i18n="table_date">Date</th>
+                            <th data-i18n="table_clock_in">Clock In</th>
+                            <th data-i18n="table_clock_out">Clock Out</th>
+                            <th data-i18n="table_duration">Duration</th>
+                            <th data-i18n="table_mode">Mode</th>
+                            <th data-i18n="table_location">Location</th>
+                            <th data-i18n="table_status">Status</th>
+                            <th data-i18n="table_verification">Verification</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody">
+                        <tr>
+                            <td colspan="8" class="empty-state" data-i18n="no_records">No records found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Leave Management Section -->
+        <section class="content-section" id="section-leave">
+            <div class="section-header">
+                <h2 data-i18n="leave_title">Leave Management</h2>
+                <p data-i18n="leave_subtitle">Request and manage your time off</p>
+            </div>
+
+            <!-- Leave Quota Cards -->
+            <div class="leave-quota-grid">
+                <div class="quota-card glass-card">
+                    <div class="quota-icon">🏖️</div>
+                    <h4 data-i18n="leave_vacation">Vacation Leave</h4>
+                    <p class="quota-value"><span id="vacationRemaining">0</span> / <span id="vacationTotal">0</span></p>
+                    <span class="quota-label" data-i18n="days_remaining">Days Remaining</span>
+                </div>
+                <div class="quota-card glass-card">
+                    <div class="quota-icon">🤒</div>
+                    <h4 data-i18n="leave_sick">Sick Leave</h4>
+                    <p class="quota-value"><span id="sickRemaining">0</span> / <span id="sickTotal">0</span></p>
+                    <span class="quota-label" data-i18n="days_remaining">Days Remaining</span>
+                </div>
+                <div class="quota-card glass-card">
+                    <div class="quota-icon">📋</div>
+                    <h4 data-i18n="leave_personal">Personal Leave</h4>
+                    <p class="quota-value"><span id="personalRemaining">0</span> / <span id="personalTotal">0</span></p>
+                    <span class="quota-label" data-i18n="days_remaining">Days Remaining</span>
+                </div>
+            </div>
+
+            <!-- Request Leave Button -->
+            <button class="btn-primary btn-large" id="requestLeaveBtn" data-i18n="btn_request_leave">Request
+                Leave</button>
+
+            <!-- Leave History -->
+            <div class="table-container glass-card">
+                <h3 data-i18n="leave_history">Leave History</h3>
+                <table class="data-table" id="leaveTable">
+                    <thead>
+                        <tr>
+                            <th data-i18n="table_type">Type</th>
+                            <th data-i18n="table_start_date">Start Date</th>
+                            <th data-i18n="table_end_date">End Date</th>
+                            <th data-i18n="table_days">Days</th>
+                            <th data-i18n="table_reason">Reason</th>
+                            <th data-i18n="table_status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaveTableBody">
+                        <tr>
+                            <td colspan="6" class="empty-state" data-i18n="no_requests">No leave requests</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Team Status Section -->
+        <section class="content-section" id="section-team">
+            <div class="section-header">
+                <h2 data-i18n="team_title">Team Status Directory</h2>
+                <p data-i18n="team_subtitle">See who's working, on leave, or offline</p>
+            </div>
+
+            <div class="team-grid" id="teamGrid">
+                <!-- Team members will be populated here -->
+            </div>
+        </section>
+
+        <!-- AI Insights Section -->
+        <section class="content-section" id="section-ai-insights">
+            <div class="section-header">
+                <h2 data-i18n="ai_title">AI Work Insights</h2>
+                <p data-i18n="ai_subtitle">Powered by Gemini AI</p>
+            </div>
+
+            <div class="ai-container">
+                <div class="ai-card glass-card">
+                    <div class="ai-header">
+                        <div class="ai-icon">🤖</div>
+                        <h3 data-i18n="ai_analysis">Work Pattern Analysis</h3>
+                    </div>
+                    <div class="ai-content" id="aiInsights">
+                        <p data-i18n="ai_loading">Analyzing your work patterns...</p>
+                    </div>
+                    <button class="btn-primary" id="generateInsightsBtn" data-i18n="btn_generate_insights">Generate
+                        Insights</button>
+                </div>
+
+                <div class="ai-card glass-card">
+                    <div class="ai-header">
+                        <div class="ai-icon">📈</div>
+                        <h3 data-i18n="ai_productivity">Productivity Recommendations</h3>
+                    </div>
+                    <div class="ai-content" id="aiRecommendations">
+                        <p data-i18n="ai_no_data">Click generate to get personalized recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Console Section -->
+        <section class="content-section admin-only" id="section-admin">
+            <div class="section-header">
+                <h2 data-i18n="admin_title">Admin Console</h2>
+                <p data-i18n="admin_subtitle">Manage employees, approvals, and system settings</p>
+            </div>
+
+            <!-- Admin Tabs -->
+            <div class="admin-tabs">
+                <button class="tab-btn active" data-tab="employees" data-i18n="admin_tab_employees">Employees</button>
+                <button class="tab-btn" data-tab="approvals" data-i18n="admin_tab_approvals">Leave Approvals</button>
+                <button class="tab-btn" data-tab="announcements"
+                    data-i18n="admin_tab_announcements">Announcements</button>
+                <button class="tab-btn" data-tab="locations" data-i18n="admin_tab_locations">Office Locations</button>
+                <button class="tab-btn" data-tab="system" data-i18n="admin_tab_system">System</button>
+            </div>
+
+            <!-- Employees Tab -->
+            <div class="tab-content active" id="tab-employees">
+                <button class="btn-primary" id="addEmployeeBtn" data-i18n="btn_add_employee">Add Employee</button>
+                <div class="table-container glass-card">
+                    <table class="data-table" id="employeeTable">
+                        <thead>
+                            <tr>
+                                <th data-i18n="table_id">ID</th>
+                                <th data-i18n="table_name">Name</th>
+                                <th data-i18n="table_department">Department</th>
+                                <th data-i18n="table_position">Position</th>
+                                <th data-i18n="table_role">Role</th>
+                                <th data-i18n="table_status">Status</th>
+                                <th data-i18n="table_actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Leave Approvals Tab -->
+            <div class="tab-content" id="tab-approvals">
+                <div class="table-container glass-card">
+                    <table class="data-table" id="approvalsTable">
+                        <thead>
+                            <tr>
+                                <th data-i18n="table_employee">Employee</th>
+                                <th data-i18n="table_type">Type</th>
+                                <th data-i18n="table_dates">Dates</th>
+                                <th data-i18n="table_days">Days</th>
+                                <th data-i18n="table_reason">Reason</th>
+                                <th data-i18n="table_actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvalsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Announcements Tab -->
+            <div class="tab-content" id="tab-announcements">
+                <button class="btn-primary" id="addAnnouncementBtn" data-i18n="btn_add_announcement">Add
+                    Announcement</button>
+                <div class="announcements-list" id="announcementsList"></div>
+            </div>
+
+            <!-- Office Locations Tab -->
+            <div class="tab-content" id="tab-locations">
+                <button class="btn-primary" id="addLocationBtn" data-i18n="btn_add_location">Add Office
+                    Location</button>
+                <div class="locations-grid" id="locationsGrid"></div>
+            </div>
+
+            <!-- System Tab -->
+            <div class="tab-content" id="tab-system">
+                <div class="system-settings glass-card">
+                    <h3 data-i18n="system_settings">System Settings</h3>
+
+                    <div class="setting-item">
+                        <label data-i18n="setting_late_threshold">Late Threshold (minutes):</label>
+                        <input type="number" id="lateThresholdInput" min="0" max="60" value="15">
+                    </div>
+
+                    <div class="setting-item">
+                        <label data-i18n="setting_gps_radius">GPS Verification Radius (meters):</label>
+                        <input type="number" id="gpsRadiusInput" min="50" max="500" value="150">
+                    </div>
+
+                    <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--border-color);">
+
+                    <h4 style="margin-bottom: 16px; color: var(--text-main);">⏰ Work Hours Configuration</h4>
+
+                    <div class="setting-item">
+                        <label>เวลาเริ่มงาน (Work Start Time):</label>
+                        <input type="time" id="workStartTimeInput" value="08:00">
+                    </div>
+
+                    <div class="setting-item">
+                        <label>เวลาเลิกงาน (Work End Time):</label>
+                        <input type="time" id="workEndTimeInput" value="17:00">
+                    </div>
+
+                    <button class="btn-primary" id="saveSystemSettingsBtn" data-i18n="btn_save_settings">Save
+                        Settings</button>
+
+                    <hr>
+
+                    <h3 data-i18n="data_management">Data Management</h3>
+                    <div class="data-actions">
+                        <button class="btn-secondary" id="exportDataBtn" data-i18n="btn_export_data">Export All
+                            Data</button>
+                        <button class="btn-secondary" id="importDataBtn" data-i18n="btn_import_data">Import
+                            Data</button>
+                        <button class="btn-danger" id="resetSystemBtn" data-i18n="btn_reset_system">Reset
+                            System</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section class="content-section" id="section-settings">
+            <div class="section-header">
+                <h2 data-i18n="settings_title">Settings</h2>
+                <p data-i18n="settings_subtitle">Manage your personal preferences</p>
+            </div>
+
+            <div class="settings-container glass-card">
+                <div class="setting-group">
+                    <h3 data-i18n="setting_appearance">Appearance</h3>
+                    <div class="setting-item">
+                        <label data-i18n="setting_theme">Theme:</label>
+                        <select id="themeSelect">
+                            <option value="light" data-i18n="theme_light">Light</option>
+                            <option value="dark" data-i18n="theme_dark">Dark</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n="setting_language">Language:</label>
+                        <select id="languageSelect">
+                            <option value="th">ไทย (Thai)</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3 data-i18n="setting_security">Security</h3>
+                    <div class="setting-item">
+                        <label data-i18n="setting_change_pin">Change PIN:</label>
+                        <button class="btn-secondary" id="changePinBtn" data-i18n="btn_change_pin">Change PIN</button>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n="setting_reset_face">Reset Face Data:</label>
+                        <button class="btn-secondary" id="resetFaceBtn" data-i18n="btn_reset_face">Reset
+                            Biometric</button>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3 data-i18n="setting_work_mode">Work Mode Preference</h3>
+                    <div class="setting-item">
+                        <label data-i18n="setting_default_mode">Default Mode:</label>
+                        <select id="workModeSelect">
+                            <option value="office" data-i18n="mode_office">Office</option>
+                            <option value="remote" data-i18n="mode_remote">Remote</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <h2 data-i18n="login_title">Welcome to GlobalWork Pro</h2>
+            <p data-i18n="login_subtitle">Select your profile to continue</p>
+            <div class="user-select" id="userSelect"></div>
+            <button class="btn-link" id="showSetupBtn" data-i18n="btn_first_time">First time? Set up your
+                account</button>
+        </div>
+    </div>
+
+    <!-- PIN Verification Modal -->
+    <div class="modal" id="pinModal">
+        <div class="modal-content">
+            <h2 data-i18n="pin_title">Enter Your PIN</h2>
+            <p data-i18n="pin_subtitle">Verify your identity</p>
+            <div class="pin-input">
+                <input type="password" maxlength="1" class="pin-digit" data-index="0">
+                <input type="password" maxlength="1" class="pin-digit" data-index="1">
+                <input type="password" maxlength="1" class="pin-digit" data-index="2">
+                <input type="password" maxlength="1" class="pin-digit" data-index="3">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="cancelPinBtn" data-i18n="btn_cancel">Cancel</button>
+                <button class="btn-primary" id="verifyPinBtn" data-i18n="btn_verify">Verify</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Face ID Modal -->
+    <div class="modal" id="faceIdModal">
+        <div class="modal-content modal-large">
+            <h2 data-i18n="faceid_title">Face ID Verification</h2>
+            <p data-i18n="faceid_subtitle">Position your face in the frame</p>
+
+            <div class="video-container">
+                <video id="faceVideo" autoplay playsinline></video>
+                <canvas id="faceCanvas" style="display: none;"></canvas>
+                <div class="face-overlay">
+                    <div class="face-guide"></div>
+                </div>
+            </div>
+
+            <div class="liveness-challenge" id="livenessChallenge" style="display: none;">
+                <h3 data-i18n="liveness_title">Liveness Check</h3>
+                <p class="challenge-instruction" id="challengeInstruction" data-i18n="liveness_smile">Please smile! 😊
+                </p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="livenessProgress"></div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" id="cancelFaceBtn" data-i18n="btn_cancel">Cancel</button>
+                <button class="btn-primary" id="captureFaceBtn" data-i18n="btn_capture">Capture</button>
+                <button class="btn-primary" id="registerFaceBtn" style="display: none;"
+                    data-i18n="btn_register">Register Face</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Mode Selection Modal -->
+    <div class="modal" id="workModeModal">
+        <div class="modal-content">
+            <h2 data-i18n="workmode_title">Select Work Mode</h2>
+            <p data-i18n="workmode_subtitle">Choose how you're working today</p>
+            <div class="mode-options">
+                <button class="mode-option" data-mode="office">
+                    <span class="mode-icon">🏢</span>
+                    <span class="mode-label" data-i18n="mode_office">Office</span>
+                </button>
+                <button class="mode-option" data-mode="remote">
+                    <span class="mode-icon">🏠</span>
+                    <span class="mode-label" data-i18n="mode_remote">Remote</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leave Request Modal -->
+    <div class="modal" id="leaveRequestModal">
+        <div class="modal-content">
+            <h2 data-i18n="leave_request_title">Request Leave</h2>
+            <form id="leaveRequestForm">
+                <div class="form-group">
+                    <label data-i18n="form_leave_type">Leave Type:</label>
+                    <select id="leaveType" required>
+                        <option value="vacation" data-i18n="leave_vacation">Vacation</option>
+                        <option value="sick" data-i18n="leave_sick">Sick Leave</option>
+                        <option value="personal" data-i18n="leave_personal">Personal Leave</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_start_date">Start Date:</label>
+                    <input type="date" id="leaveStartDate" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_end_date">End Date:</label>
+                    <input type="date" id="leaveEndDate" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_reason">Reason:</label>
+                    <textarea id="leaveReason" rows="3" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelLeaveBtn"
+                        data-i18n="btn_cancel">Cancel</button>
+                    <button type="submit" class="btn-primary" data-i18n="btn_submit">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div class="modal" id="addEmployeeModal">
+        <div class="modal-content">
+            <h2 data-i18n="add_employee_title">Add Employee</h2>
+            <form id="addEmployeeForm">
+                <div class="form-group">
+                    <label data-i18n="form_name">Name:</label>
+                    <input type="text" id="employeeName" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_department">Department:</label>
+                    <input type="text" id="employeeDepartment" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_position">Position:</label>
+                    <input type="text" id="employeePosition" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_role">Role:</label>
+                    <select id="employeeRole" required>
+                        <option value="staff" data-i18n="role_staff">Staff</option>
+                        <option value="admin" data-i18n="role_admin">Admin</option>
+                        <option value="owner" data-i18n="role_owner">Owner</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_pin">PIN (4 digits):</label>
+                    <input type="password" id="employeePin" maxlength="4" pattern="[0-9]{4}" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelEmployeeBtn"
+                        data-i18n="btn_cancel">Cancel</button>
+                    <button type="submit" class="btn-primary" data-i18n="btn_add">Add Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Location Modal -->
+    <div class="modal" id="addLocationModal">
+        <div class="modal-content modal-large">
+            <h2 data-i18n="add_location_title">Add Office Location</h2>
+            <form id="addLocationForm">
+                <div class="form-group">
+                    <label data-i18n="form_location_name">Location Name:</label>
+                    <input type="text" id="locationName" required placeholder="e.g., Innovation Park Zone">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_coordinates">Select Location on Map:</label>
+                    <div id="mapPicker" style="height: 400px; border-radius: 12px; overflow: hidden;"></div>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_latitude">Latitude:</label>
+                    <input type="text" id="locationLat" readonly>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_longitude">Longitude:</label>
+                    <input type="text" id="locationLng" readonly>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelLocationBtn"
+                        data-i18n="btn_cancel">Cancel</button>
+                    <button type="submit" class="btn-primary" data-i18n="btn_add">Add Location</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Announcement Modal -->
+    <div class="modal" id="addAnnouncementModal">
+        <div class="modal-content">
+            <h2 data-i18n="add_announcement_title">Add Announcement</h2>
+            <form id="addAnnouncementForm">
+                <div class="form-group">
+                    <label data-i18n="form_title">Title:</label>
+                    <input type="text" id="announcementTitle" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_message">Message:</label>
+                    <textarea id="announcementMessage" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="form_priority">Priority:</label>
+                    <select id="announcementPriority">
+                        <option value="normal" data-i18n="priority_normal">Normal</option>
+                        <option value="important" data-i18n="priority_important">Important</option>
+                        <option value="urgent" data-i18n="priority_urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelAnnouncementBtn"
+                        data-i18n="btn_cancel">Cancel</button>
+                    <button type="submit" class="btn-primary" data-i18n="btn_publish">Publish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="confirm-icon">⚠️</div>
+            <h2 id="confirmTitle">Confirm Action</h2>
+            <p id="confirmMessage">Are you sure you want to proceed?</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="confirmCancelBtn">Cancel</button>
+                <button class="btn-primary" id="confirmOkBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div class="modal" id="alertModal">
+        <div class="modal-content">
+            <div class="alert-icon" id="alertIcon">ℹ️</div>
+            <h2 id="alertTitle">Notification</h2>
+            <p id="alertMessage">This is an alert message.</p>
+            <div class="modal-actions">
+                <button class="btn-primary" id="alertOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="translations.js"></script>
+    <script src="helpers.js"></script>
+    <script src="app.js"></script>
+    <script src="attendance.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="admin.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlobalWork Pro - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        .test-card {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #6366f1;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #4f46e5;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 GlobalWork Pro - System Test</h1>
+
+    <div class="test-card">
+        <h2>1. JavaScript Loading Test</h2>
+        <p id="jsTest" class="error">❌ JavaScript not loaded</p>
+    </div>
+
+    <div class="test-card">
+        <h2>2. LocalStorage Test</h2>
+        <p id="storageTest">Testing...</p>
+        <button onclick="testStorage()">Test Storage</button>
+    </div>
+
+    <div class="test-card">
+        <h2>3. Demo Data Test</h2>
+        <p id="dataTest">Testing...</p>
+        <button onclick="testDemoData()">Check Demo Data</button>
+    </div>
+
+    <div class="test-card">
+        <h2>4. Navigation Test</h2>
+        <button onclick="testNavigation()">Test Navigation</button>
+        <p id="navTest"></p>
+    </div>
+
+    <div class="test-card">
+        <h2>5. Open Main App</h2>
+        <a href="index.html"
+            style="display: inline-block; padding: 10px 20px; background: #10b981; color: white; text-decoration: none; border-radius: 4px;">
+            🚀 Open GlobalWork Pro
+        </a>
+    </div>
+
+    <script>
+        // Test 1: JavaScript Loading
+        document.getElementById('jsTest').innerHTML = '✅ JavaScript loaded successfully';
+        document.getElementById('jsTest').className = 'success';
+
+        // Test 2: LocalStorage
+        function testStorage() {
+            try {
+                localStorage.setItem('test', 'working');
+                const result = localStorage.getItem('test');
+                localStorage.removeItem('test');
+
+                if (result === 'working') {
+                    document.getElementById('storageTest').innerHTML = '✅ LocalStorage is working';
+                    document.getElementById('storageTest').className = 'success';
+                } else {
+                    document.getElementById('storageTest').innerHTML = '❌ LocalStorage failed';
+                    document.getElementById('storageTest').className = 'error';
+                }
+            } catch (e) {
+                document.getElementById('storageTest').innerHTML = '❌ LocalStorage error: ' + e.message;
+                document.getElementById('storageTest').className = 'error';
+            }
+        }
+
+        // Test 3: Demo Data
+        function testDemoData() {
+            const saved = localStorage.getItem('globalwork_state');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    const employeeCount = state.employees ? state.employees.length : 0;
+                    const locationCount = state.officeLocations ? state.officeLocations.length : 0;
+
+                    document.getElementById('dataTest').innerHTML = `
+                        ✅ Data found!<br>
+                        - Employees: ${employeeCount}<br>
+                        - Office Locations: ${locationCount}<br>
+                        - Theme: ${state.settings?.theme || 'not set'}<br>
+                        - Language: ${state.settings?.language || 'not set'}
+                    `;
+                    document.getElementById('dataTest').className = 'success';
+                } catch (e) {
+                    document.getElementById('dataTest').innerHTML = '❌ Data parse error: ' + e.message;
+                    document.getElementById('dataTest').className = 'error';
+                }
+            } else {
+                document.getElementById('dataTest').innerHTML = '⚠️ No data found. Open the main app to initialize.';
+                document.getElementById('dataTest').className = 'error';
+            }
+        }
+
+        // Test 4: Navigation
+        function testNavigation() {
+            const tests = [
+                { file: 'index.html', name: 'Main App' },
+                { file: 'app.js', name: 'App Logic' },
+                { file: 'attendance.js', name: 'Attendance Module' },
+                { file: 'dashboard.js', name: 'Dashboard Module' },
+                { file: 'admin.js', name: 'Admin Module' },
+                { file: 'translations.js', name: 'Translations' },
+                { file: 'styles.css', name: 'Styles' }
+            ];
+
+            let results = '<strong>File Check:</strong><br>';
+            tests.forEach(test => {
+                results += `📄 ${test.name} (${test.file})<br>`;
+            });
+
+            document.getElementById('navTest').innerHTML = results;
+        }
+
+        // Auto-run tests
+        window.onload = function () {
+            testStorage();
+            testDemoData();
+        };
+    </script>
+</body>
+
+</html>
